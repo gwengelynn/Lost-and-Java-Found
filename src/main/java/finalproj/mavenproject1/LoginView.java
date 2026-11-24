@@ -3,9 +3,10 @@ package finalproj.mavenproject1;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -15,6 +16,7 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -33,7 +35,6 @@ import javafx.stage.Stage;
  *   ue-campus.png  — full-screen background
  *   UE LOGO.png    — top-left university seal
  *   BAG.png        — bag icon beside title
- * Demo: student/student123 (Student), admin/admin123 (Admin)
  */
 public class LoginView {
 
@@ -61,6 +62,7 @@ public class LoginView {
 
     public LoginView(Stage stage) {
         this.stage = stage;
+        UeImages.applyStageIcon(stage);
         this.root = buildUi();
     }
 
@@ -114,7 +116,7 @@ public class LoginView {
 
     /**
      * Left side like the mockup:
-     *   TOP    = UE LOGO + UNIVERSITY OF THE EAST / PHILIPPINES
+     *   TOP    = UE LOGO + UNIVERSITY OF THE EAST / CALOOCAN
      *   BOTTOM = BAG + Lost and Java-Found + tagline
      */
     private VBox buildLeftBrandPanel() {
@@ -128,7 +130,7 @@ public class LoginView {
         HBox ueHeader = new HBox(14);
         ueHeader.setAlignment(Pos.CENTER_LEFT);
 
-        javafx.scene.Node ueLogoNode = UeImages.ueLogo(78);
+        javafx.scene.Node ueLogoNode = UeImages.ueLogo(108);
         if (ueLogoNode != null) {
             ueHeader.getChildren().add(ueLogoNode);
         }
@@ -136,15 +138,9 @@ public class LoginView {
         VBox uniText = new VBox(2);
         uniText.setAlignment(Pos.CENTER_LEFT);
         Label uniTop = new Label("UNIVERSITY OF THE EAST");
-        uniTop.setStyle(
-                "-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;"
-                + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.85), 10, 0.4, 0, 1);"
-        );
-        Label uniBottom = new Label("PHILIPPINES");
-        uniBottom.setStyle(
-                "-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;"
-                + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.85), 10, 0.4, 0, 1);"
-        );
+        uniTop.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
+        Label uniBottom = new Label("CALOOCAN");
+        uniBottom.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
         uniText.getChildren().addAll(uniTop, uniBottom);
         ueHeader.getChildren().add(uniText);
 
@@ -157,25 +153,15 @@ public class LoginView {
 
         ImageView bagLogo = UeImages.imageView(UeImages.loadBag(), 120, 120);
         if (bagLogo != null) {
-            // Soft white glow so the red bag outline pops on the campus photo
-            bagLogo.setEffect(new javafx.scene.effect.DropShadow(
-                    javafx.scene.effect.BlurType.GAUSSIAN,
-                    javafx.scene.paint.Color.rgb(255, 255, 255, 0.75),
-                    12, 0.4, 0, 0
-            ));
             titleRow.getChildren().add(bagLogo);
         }
 
         VBox titleText = new VBox(0);
         Label line1 = new Label("Lost and");
-        line1.setStyle(
-                "-fx-font-size: 38px; -fx-font-weight: bold; -fx-text-fill: white;"
-                + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.85), 12, 0.45, 0, 1);"
-        );
+        line1.setStyle("-fx-font-size: 38px; -fx-font-weight: bold; -fx-text-fill: white;");
         Label line2 = new Label("Java-Found");
         line2.setStyle(
                 "-fx-font-size: 38px; -fx-font-weight: bold; -fx-text-fill: " + UE_RED + ";"
-                + "-fx-effect: dropshadow(gaussian, rgba(255,255,255,0.95), 8, 0.55, 0, 0);"
         );
         titleText.getChildren().addAll(line1, line2);
         titleRow.getChildren().add(titleText);
@@ -184,7 +170,6 @@ public class LoginView {
         system.setWrapText(true);
         system.setStyle(
                 "-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 8 0 0 0;"
-                + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.85), 10, 0.4, 0, 1);"
         );
 
         Region rule = new Region();
@@ -195,7 +180,6 @@ public class LoginView {
         Label tagline = new Label("Reuniting what matters.");
         tagline.setStyle(
                 "-fx-font-size: 15px; -fx-font-style: italic; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 6 0 0 0;"
-                + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.85), 10, 0.4, 0, 1);"
         );
 
         brand.getChildren().addAll(ueHeader, grow, titleRow, system, rule, tagline);
@@ -234,6 +218,7 @@ public class LoginView {
         roleGroup.selectedToggleProperty().addListener((obs, oldT, newT) -> {
             styleRoleToggle(studentToggle, studentToggle.isSelected());
             styleRoleToggle(adminToggle, adminToggle.isSelected());
+            updateLoginPrompt();
             if (newT == null && oldT != null) {
                 oldT.setSelected(true);
             }
@@ -254,7 +239,7 @@ public class LoginView {
         subtitle.setStyle("-fx-font-size: 13px; -fx-text-fill: " + TEXT_MUTED + ";");
 
         userField = new TextField();
-        userField.setPromptText("Email or Student Number");
+        updateLoginPrompt();
         styleLightInput(userField);
 
         passwordField = new PasswordField();
@@ -301,33 +286,39 @@ public class LoginView {
 
         Hyperlink forgot = new Hyperlink("Forgot Password?");
         forgot.setStyle("-fx-text-fill: " + UE_RED + "; -fx-font-size: 12px;");
-        forgot.setOnAction(e -> infoStub(
-                "Forgot Password",
-                "Password reset is not built yet. Use a demo account or Register."
-        ));
+        forgot.setOnAction(e -> showForgotPasswordDialog());
 
         Region mid = new Region();
         HBox.setHgrow(mid, Priority.ALWAYS);
         HBox rememberRow = new HBox(8, rememberCheck, mid, forgot);
         rememberRow.setAlignment(Pos.CENTER_LEFT);
 
+        // Restore remember-me fields (never restores the password).
+        if (SessionPrefs.isRemembered()) {
+            rememberCheck.setSelected(true);
+            userField.setText(SessionPrefs.loginKey());
+            if ("ADMIN".equalsIgnoreCase(SessionPrefs.role())) {
+                adminToggle.setSelected(true);
+            } else {
+                studentToggle.setSelected(true);
+            }
+        }
+
+        // Login errors use Toast — no inline status banner.
         statusLabel = new Label("");
-        statusLabel.setWrapText(true);
-        statusLabel.setStyle("-fx-text-fill: " + UE_RED + "; -fx-font-size: 12px;");
+        statusLabel.setManaged(false);
+        statusLabel.setVisible(false);
 
         Button loginButton = new Button("Log In  →");
         loginButton.setMaxWidth(Double.MAX_VALUE);
-        loginButton.setStyle(
-                "-fx-background-color: " + UE_RED + ";"
-                + "-fx-text-fill: white;"
-                + "-fx-font-size: 15px;"
-                + "-fx-font-weight: bold;"
-                + "-fx-background-radius: 10;"
-                + "-fx-padding: 12 16 12 16;"
-                + "-fx-cursor: hand;"
-        );
         loginButton.setOnAction(e -> handleLogin());
-        loginButton.setDefaultButton(true);
+        loginButton.setDefaultButton(true); // Enter key submits
+        UiButtons.style(loginButton, UiButtons.Kind.PRIMARY);
+        loginButton.setStyle(
+                UiTheme.primaryButton()
+                + "-fx-font-size: 15px;"
+                + "-fx-padding: 12 16 12 16;"
+        );
 
         HBox orRow = buildOrDivider();
 
@@ -345,14 +336,14 @@ public class LoginView {
         HBox registerRow = new HBox(6, noAccount, registerLink);
         registerRow.setAlignment(Pos.CENTER);
 
-        Hyperlink reports = footerLink("View System Reports");
-        reports.setOnAction(e -> infoStub("System Reports", "Reports screen is not built yet."));
         Hyperlink help = footerLink("Need Help?");
-        help.setOnAction(e -> infoStub("Help", "Help / support is not built yet."));
+        help.setOnAction(e -> AppInfoDialogs.showHelp(stage));
+        Hyperlink about = footerLink("About the Developers");
+        about.setOnAction(e -> AppInfoDialogs.showAboutDevelopers(stage));
         Label pipe = new Label("|");
         pipe.setStyle("-fx-text-fill: " + BORDER + ";");
 
-        HBox footer = new HBox(10, reports, pipe, help);
+        HBox footer = new HBox(10, help, pipe, about);
         footer.setAlignment(Pos.CENTER);
 
         card.getChildren().addAll(
@@ -364,15 +355,14 @@ public class LoginView {
                 passwordVisibleField,
                 showPasswordCheck,
                 rememberRow,
-                statusLabel,
                 loginButton,
                 orRow,
                 registerRow,
                 footer
         );
 
-        userField.textProperty().addListener((o, a, b) -> statusLabel.setText(""));
-        passwordField.textProperty().addListener((o, a, b) -> statusLabel.setText(""));
+        userField.textProperty().addListener((o, a, b) -> clearStatus());
+        passwordField.textProperty().addListener((o, a, b) -> clearStatus());
 
         return card;
     }
@@ -399,41 +389,134 @@ public class LoginView {
         }
 
         String expectedRole = adminToggle.isSelected() ? "ADMIN" : "STUDENT";
+        int waitSec = LoginThrottle.secondsRemaining(username, expectedRole);
+        if (waitSec > 0) {
+            showError("Too many failed attempts. Try again in " + waitSec + " second"
+                    + (waitSec == 1 ? "" : "s") + ".");
+            return;
+        }
+
         User attempt = new User();
         attempt.setUsername(username);
         attempt.setPasswordHash(password);
         attempt.setRole(expectedRole);
 
         if (!attempt.login()) {
-            showError("Invalid credentials for " + expectedRole + ". Check username, password, and role.");
+            LoginThrottle.recordFailure(username, expectedRole);
+            int left = LoginThrottle.secondsRemaining(username, expectedRole);
+            AuditLog.write(null, username, expectedRole, "LOGIN_FAILED", "USER", username,
+                    "Invalid credentials for " + expectedRole);
+            if (left > 0) {
+                showError("Too many failed attempts. Account login locked for " + left + " seconds.");
+            } else {
+                showError("Invalid credentials for " + expectedRole + ". Check username, password, and role.");
+            }
             return;
         }
 
+        LoginThrottle.recordSuccess(username, expectedRole);
+
         if (rememberCheck.isSelected()) {
-            System.out.println("Remember me checked (not saved yet — demo only).");
+            SessionPrefs.save(username, expectedRole);
+        } else {
+            SessionPrefs.clear();
         }
 
-        statusLabel.setText("");
+        clearStatus();
         User u = User.getCurrentSession();
+        AuditLog.record("LOGIN", "USER", String.valueOf(u.getUserId()),
+                u.getUserRole() + " signed in");
+
+        // SAO admin Reset PW → must replace the temporary password before dashboard.
+        if (u.isMustChangePassword() && !completeForcedPasswordChange(u)) {
+            AuditLog.record("LOGOUT", "USER", String.valueOf(u.getUserId()),
+                    "Signed out — temporary password not replaced");
+            u.logout();
+            Toast.info(stage, "Signed out. Log in again after you are ready to set a new password.");
+            return;
+        }
+
+        openDashboard(u);
+    }
+
+    private void openDashboard(User u) {
         if ("STUDENT".equalsIgnoreCase(u.getUserRole())) {
             StudentDashboardView dashboard = new StudentDashboardView(stage, u);
             stage.setTitle("Lost and Java-Found — Student");
-            stage.setScene(new javafx.scene.Scene(dashboard.getRoot(), 1280, 760));
+            stage.setScene(UeChrome.scene(dashboard.getRoot(), 1280, 760));
             stage.setMinWidth(1024);
             stage.setMinHeight(640);
+            IdleSessionGuard.attach(stage, dashboard::forceLogoutForIdle);
             return;
         }
 
         if ("ADMIN".equalsIgnoreCase(u.getUserRole())) {
             AdminDashboardView dashboard = new AdminDashboardView(stage, u);
             stage.setTitle("Lost and Java-Found — Admin");
-            stage.setScene(new javafx.scene.Scene(dashboard.getRoot(), 1280, 760));
+            stage.setScene(UeChrome.scene(dashboard.getRoot(), 1280, 760));
             stage.setMinWidth(1024);
             stage.setMinHeight(640);
+            IdleSessionGuard.attach(stage, dashboard::forceLogoutForIdle);
             return;
         }
 
         showError("Unknown account role. Please contact support.");
+    }
+
+    /**
+     * Blocks dashboard access until the user replaces the SAO temporary password.
+     * Cancel / abandon → caller logs them out.
+     */
+    private boolean completeForcedPasswordChange(User account) {
+        while (account.isMustChangePassword()) {
+            BrandedDialog dialog = new BrandedDialog(stage, "Set a new password")
+                    .help("Lost & Found / SAO reset your password. Enter the temporary password "
+                            + "they gave you, then choose a new one only you know.\n"
+                            + PasswordHasher.policyMessage());
+            PasswordField temporary = dialog.password("Temporary password");
+            PasswordField next = dialog.password("New password");
+            PasswordField confirm = dialog.password("Confirm new password");
+
+            boolean saved = dialog.show(() -> {
+                if (!account.verifyPassword(temporary.getText())) {
+                    Toast.error(stage, "Temporary password does not match.");
+                    return false;
+                }
+                String plain = next.getText() == null ? "" : next.getText();
+                String conf = confirm.getText() == null ? "" : confirm.getText();
+                String pairError = PasswordHasher.validateNewPasswordPair(plain, conf);
+                if (pairError != null) {
+                    Toast.error(stage, pairError);
+                    return false;
+                }
+                if (plain.equals(temporary.getText())) {
+                    Toast.error(stage, "Choose a new password different from the temporary one.");
+                    return false;
+                }
+                account.setPasswordHash(plain);
+                if (!account.changePassword()) {
+                    Toast.error(stage, "Could not save the new password. Try again.");
+                    return false;
+                }
+                return true;
+            });
+
+            if (saved) {
+                AuditLog.record("PASSWORD_CHANGE_AFTER_RESET", "USER",
+                        String.valueOf(account.getUserId()),
+                        "Replaced SAO temporary password on login");
+                Toast.success(stage, "Password updated — welcome back.");
+                return true;
+            }
+
+            boolean leave = BrandedDialog.confirm(stage, "Sign out?",
+                    "You must set a new password after the SAO reset before using the system.\n\n"
+                            + "Sign out and try again later?");
+            if (leave) {
+                return false;
+            }
+        }
+        return !account.isMustChangePassword();
     }
 
     private String getPasswordText() {
@@ -446,24 +529,60 @@ public class LoginView {
     private void goToSignup() {
         SignupView signupView = new SignupView(stage);
         stage.setTitle("Lost and Java-Found — Sign up");
-        stage.setScene(new javafx.scene.Scene(signupView.getRoot(), 1100, 700));
+        stage.setScene(UeChrome.scene(signupView.getRoot(), 1100, 700));
     }
 
     private void showError(String message) {
-        statusLabel.setText(message);
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Login failed");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+        Toast.error(stage, message == null ? "Login failed." : message);
     }
 
-    private static void infoStub(String title, String message) {
-        Alert tip = new Alert(Alert.AlertType.INFORMATION);
-        tip.setTitle(title);
-        tip.setHeaderText(null);
-        tip.setContentText(message);
-        tip.showAndWait();
+    private void clearStatus() {
+        // Feedback is toast-only
+    }
+
+    private void showForgotPasswordDialog() {
+        BrandedDialog dialog = new BrandedDialog(stage, "Forgot Password")
+                .help("Reset using student number (or username) and your UE email ("
+                        + AccountRules.UE_EMAIL_DOMAIN + "). "
+                        + "New password needs 8+ characters with a letter and a number.");
+        TextField studentNumber = dialog.field("Student # / username");
+        studentNumber.setPromptText("Student number or username");
+        TextField email = dialog.field("UE email");
+        email.setPromptText("name" + AccountRules.UE_EMAIL_DOMAIN);
+        PasswordField next = dialog.password("New password");
+        PasswordField confirm = dialog.password("Confirm");
+
+        dialog.show(() -> {
+            String pairError = PasswordHasher.validateNewPasswordPair(next.getText(), confirm.getText());
+            if (pairError != null) {
+                Toast.error(stage, pairError);
+                return false;
+            }
+            if (!AccountRules.isUeEmail(email.getText())) {
+                Toast.error(stage, AccountRules.ueEmailMessage());
+                return false;
+            }
+            boolean ok = User.resetPasswordWithIdentity(
+                    studentNumber.getText(), email.getText(), next.getText());
+            if (ok) {
+                Toast.success(stage, "Password updated — you can log in with the new password now.");
+                return true;
+            }
+            Toast.error(stage,
+                    "Could not verify identity. Check student number/username and "
+                    + AccountRules.UE_EMAIL_DOMAIN + " email, "
+                    + "or contact Lost & Found / an administrator.");
+            return false;
+        });
+    }
+
+    private void updateLoginPrompt() {
+        if (userField == null) {
+            return;
+        }
+        userField.setPromptText(adminToggle != null && adminToggle.isSelected()
+                ? "Email"
+                : "Email or Student Number");
     }
 
     private static Hyperlink footerLink(String text) {

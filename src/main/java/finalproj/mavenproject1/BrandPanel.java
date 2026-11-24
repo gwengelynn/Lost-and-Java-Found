@@ -3,21 +3,15 @@ package finalproj.mavenproject1;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.effect.BlurType;
-import javafx.scene.effect.DropShadow;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Line;
 
-/**
- * Dashboard sidebar brand — sized to consume space like the login brand mockup.
- */
 public final class BrandPanel {
 
     private static final String UE_RED = "#E41135";
-    private static final String TEXT_HALO =
-            "-fx-effect: dropshadow(gaussian, rgba(255,255,255,0.95), 12, 0.6, 0, 0);";
 
     private BrandPanel() {}
 
@@ -26,12 +20,11 @@ public final class BrandPanel {
     }
 
     public static VBox buildSidebarBrand(String portalLabel) {
-        VBox brand = new VBox(12);
+        VBox brand = new VBox(8);
         brand.setAlignment(Pos.TOP_CENTER);
-        brand.setPadding(new Insets(6, 4, 8, 4));
+        brand.setPadding(new Insets(2, 4, 4, 4));
 
-        // Larger seal — matches the first reference presence
-        brand.getChildren().add(UeImages.ueLogo(96));
+        brand.getChildren().add(UeImages.ueLogo(72));
 
         Label uniTop = new Label("UNIVERSITY OF THE EAST");
         uniTop.setWrapText(true);
@@ -39,40 +32,41 @@ public final class BrandPanel {
         uniTop.setMaxWidth(Double.MAX_VALUE);
         uniTop.setStyle(
                 "-fx-text-fill: #141416;"
-                + "-fx-font-size: 13px;"
+                + "-fx-font-size: 11px;"
                 + "-fx-font-weight: bold;"
                 + "-fx-text-alignment: center;"
-                + TEXT_HALO
         );
 
-        Label uniBottom = new Label("PHILIPPINES");
+        Label uniBottom = new Label("CALOOCAN");
         uniBottom.setAlignment(Pos.CENTER);
         uniBottom.setMaxWidth(Double.MAX_VALUE);
         uniBottom.setStyle(
                 "-fx-text-fill: #141416;"
-                + "-fx-font-size: 12px;"
+                + "-fx-font-size: 11px;"
                 + "-fx-font-weight: bold;"
                 + "-fx-text-alignment: center;"
-                + TEXT_HALO
         );
 
-        VBox uniText = new VBox(2, uniTop, uniBottom);
+        VBox uniText = new VBox(1, uniTop, uniBottom);
         uniText.setAlignment(Pos.CENTER);
         brand.getChildren().add(uniText);
+        Line topSeparator = new Line(0, 0, 180, 0);
+        topSeparator.setStroke(Color.web(UE_RED));
+        topSeparator.setStrokeWidth(2);
 
-        // Bigger bag + title block, centered like the first pic
-        HBox titleRow = new HBox(10);
+        HBox separatorBox = new HBox(topSeparator);
+        separatorBox.setAlignment(Pos.CENTER);
+        separatorBox.setMaxWidth(Double.MAX_VALUE);
+        brand.getChildren().add(separatorBox);
+        VBox.setMargin(separatorBox, new Insets(6, 0, 2, 0));
+
+        HBox titleRow = new HBox(8);
         titleRow.setAlignment(Pos.CENTER);
         titleRow.setMaxWidth(Double.MAX_VALUE);
-        titleRow.setPadding(new Insets(4, 0, 0, 0));
+        titleRow.setPadding(new Insets(2, 0, 0, 0));
 
-        ImageView bagLogo = UeImages.imageView(UeImages.loadBag(), 64, 64);
+        ImageView bagLogo = UeImages.imageView(UeImages.loadBag(), 48, 48);
         if (bagLogo != null) {
-            bagLogo.setEffect(new DropShadow(
-                    BlurType.GAUSSIAN,
-                    Color.rgb(255, 255, 255, 0.95),
-                    16, 0.55, 0, 0
-            ));
             titleRow.getChildren().add(bagLogo);
         }
 
@@ -81,16 +75,14 @@ public final class BrandPanel {
         Label line1 = new Label("Lost and");
         line1.setStyle(
                 "-fx-text-fill: #141416;"
-                + "-fx-font-size: 20px;"
+                + "-fx-font-size: 15px;"
                 + "-fx-font-weight: bold;"
-                + TEXT_HALO
         );
         Label line2 = new Label("Java-Found");
         line2.setStyle(
                 "-fx-text-fill: " + UE_RED + ";"
                 + "-fx-font-size: 20px;"
                 + "-fx-font-weight: bold;"
-                + TEXT_HALO
         );
         titleText.getChildren().addAll(line1, line2);
         titleRow.getChildren().add(titleText);
@@ -99,16 +91,26 @@ public final class BrandPanel {
 
         Label portal = new Label(portalLabel == null || portalLabel.isBlank()
                 ? "Portal" : portalLabel);
-        portal.setAlignment(Pos.CENTER);
-        portal.setMaxWidth(Double.MAX_VALUE);
         portal.setStyle(
                 "-fx-text-fill: #141416;"
-                + "-fx-font-size: 12px;"
+                + "-fx-font-size: 11px;"
                 + "-fx-font-weight: bold;"
                 + "-fx-text-alignment: center;"
-                + TEXT_HALO
         );
-        brand.getChildren().add(portal);
+
+        Line leftLine = new Line(0, 0, 36, 0);
+        leftLine.setStroke(Color.web(UE_RED));
+        leftLine.setStrokeWidth(2);
+
+        Line rightLine = new Line(0, 0, 36, 0);
+        rightLine.setStroke(Color.web(UE_RED));
+        rightLine.setStrokeWidth(2);
+
+        HBox portalRow = new HBox(8, leftLine, portal, rightLine);
+        portalRow.setAlignment(Pos.CENTER);
+        portalRow.setMaxWidth(Double.MAX_VALUE);
+        brand.getChildren().add(portalRow);
+        VBox.setMargin(portalRow, new Insets(2, 0, 4, 0));
 
         return brand;
     }

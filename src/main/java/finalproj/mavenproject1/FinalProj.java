@@ -10,12 +10,13 @@ public class FinalProj extends Application {
     @Override
     public void start(Stage stage) {
         LoginView loginView = new LoginView(stage);
-        Scene scene = new Scene(loginView.getRoot(), 1100, 680);
+        Scene scene = UeChrome.scene(loginView.getRoot(), 1100, 680);
 
         stage.setTitle("Lost and Java-Found — Login");
         stage.setScene(scene);
         stage.setMinWidth(900);
         stage.setMinHeight(560);
+        UeImages.applyStageIcon(stage);
         stage.show();
         
         Connection conn = DatabaseConnection.getConnection();

@@ -27,12 +27,24 @@ public class User {
     private String contactNumber;
     private String email;
     private String accountStatus;
+    private String avatarPath;
+    /** Raw avatar image bytes stored in MySQL (LONGBLOB avatar_data). */
+    private byte[] avatarData;
+    /** True after admin Reset PW — user must pick a new password before using the app. */
+    private boolean mustChangePassword;
 
     public User() {}
 
     public User(int userId, String username, String passwordHash, String fullName, String role,
                 String studentNumber, String course, String yearLevel, String contactNumber,
                 String email, String accountStatus) {
+        this(userId, username, passwordHash, fullName, role, studentNumber, course, yearLevel,
+                contactNumber, email, accountStatus, null);
+    }
+
+    public User(int userId, String username, String passwordHash, String fullName, String role,
+                String studentNumber, String course, String yearLevel, String contactNumber,
+                String email, String accountStatus, String avatarPath) {
         this.userId = userId;
         this.username = username;
         this.passwordHash = passwordHash;
@@ -44,6 +56,7 @@ public class User {
         this.contactNumber = contactNumber;
         this.email = email;
         this.accountStatus = accountStatus;
+        this.avatarPath = avatarPath;
     }
 
     public int getUserId() { return userId; }
@@ -79,7 +92,24 @@ public class User {
     public String getAccountStatus() { return accountStatus; }
     public void setAccountStatus(String accountStatus) { this.accountStatus = accountStatus; }
 
-    /** Creates a STUDENT account in MySQL (users + students). */
+    public String getAvatarPath() { return avatarPath; }
+    public void setAvatarPath(String avatarPath) { this.avatarPath = avatarPath; }
+
+    public byte[] getAvatarData() { return avatarData; }
+    public void setAvatarData(byte[] avatarData) { this.avatarData = avatarData; }
+
+    public boolean isMustChangePassword() { return mustChangePassword; }
+    public void setMustChangePassword(boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
+    }
+
+    /** Sets avatar path and loads file bytes for MySQL BLOB storage. */
+    public void setAvatar(String storedPath) {
+        this.avatarPath = storedPath;
+        this.avatarData = PhotoStorage.readBytes(storedPath);
+    }
+
+    /** Creates a STUDENT account in MySQL (users + students). Password is hashed before insert. */
     public boolean register() {
         if (!validateAccount()) return false;
         if (usernameExists(this.username)) return false;
@@ -96,6 +126,10 @@ public class User {
         if (this.accountStatus == null || this.accountStatus.isBlank()) {
             this.accountStatus = "Active";
         }
+
+        // Hash plaintext from the form — never store the typed password.
+        String plain = this.passwordHash;
+        this.passwordHash = PasswordHasher.hash(plain);
 
         Connection connection = DatabaseConnection.getConnection();
         if (connection == null) return false;
@@ -163,20 +197,155 @@ public class User {
         }
     }
 
-    /** Checks login credentials against MySQL. */
+    /**
+     * Checks login credentials against MySQL.
+     * Typed password is verified against BCrypt (or legacy plaintext).
+     * Legacy plaintext rows are upgraded to a hash after a successful login.
+     */
     public boolean login() {
         Optional<User> found = findByLoginKey(this.username);
         if (found.isEmpty()) return false;
         User account = found.get();
         if (!"Active".equalsIgnoreCase(nullSafe(account.accountStatus, "Active"))) return false;
-        if (!account.passwordHash.equals(this.passwordHash)) return false;
+        String typedPlain = this.passwordHash;
+        if (!PasswordHasher.matches(typedPlain, account.passwordHash)) return false;
         if (this.role != null && !this.role.isBlank()
                 && !account.role.equalsIgnoreCase(this.role)) {
             return false;
         }
+        // Migrate old plaintext rows → BCrypt (never demote a hash back to plaintext).
+        if (!PasswordHasher.looksHashed(account.passwordHash)) {
+            account.passwordHash = PasswordHasher.hash(typedPlain);
+            account.persistPasswordHash();
+        }
         currentSession = account;
         copyFrom(account);
         return true;
+    }
+
+    /** Verifies the given plain password against the stored value for this user. */
+    public boolean verifyPassword(String plainPassword) {
+        return PasswordHasher.matches(plainPassword, this.passwordHash);
+    }
+
+    /**
+     * Forgot-password reset: student number + email must match one Active account,
+     * then the new password is stored as a BCrypt hash.
+     */
+    public static boolean resetPasswordWithIdentity(String studentNumber, String email,
+                                                    String newPassword) {
+        if (studentNumber == null || studentNumber.isBlank()
+                || email == null || email.isBlank()
+                || newPassword == null || newPassword.isBlank()) {
+            return false;
+        }
+        if (!PasswordHasher.meetsPolicy(newPassword)) {
+            return false;
+        }
+        if (!AccountRules.isUeEmail(email)) {
+            return false;
+        }
+        Optional<User> found = findByLoginKey(studentNumber.trim());
+        if (found.isEmpty()) {
+            found = findByLoginKey(email.trim());
+        }
+        if (found.isEmpty()) return false;
+        User account = found.get();
+        if (!"Active".equalsIgnoreCase(nullSafe(account.accountStatus, "Active"))) return false;
+        String storedEmail = nullSafe(account.email, "");
+        String storedStudent = nullSafe(account.studentNumber, "");
+        boolean emailOk = storedEmail.equalsIgnoreCase(email.trim());
+        boolean studentOk = storedStudent.equalsIgnoreCase(studentNumber.trim())
+                || account.username.equalsIgnoreCase(studentNumber.trim());
+        if (!emailOk || !studentOk) return false;
+
+        // Self-serve reset already chose the new password — clear any SAO temp flag.
+        account.passwordHash = PasswordHasher.hash(newPassword);
+        account.mustChangePassword = false;
+        return account.persistPasswordAndMustChangeFlag();
+    }
+
+    /**
+     * Admin sets a temporary password (BCrypt) and flags the account so the
+     * user must choose a new password on next login.
+     */
+    public static boolean adminResetPassword(int targetUserId, String newPassword) {
+        if (targetUserId <= 0 || newPassword == null || !PasswordHasher.meetsPolicy(newPassword)) {
+            return false;
+        }
+        Optional<User> found = findById(targetUserId);
+        if (found.isEmpty()) return false;
+        User account = found.get();
+        account.passwordHash = PasswordHasher.hash(newPassword);
+        account.mustChangePassword = true;
+        boolean ok = account.persistPasswordAndMustChangeFlag();
+        if (ok && currentSession != null && currentSession.userId == targetUserId) {
+            currentSession.passwordHash = account.passwordHash;
+            currentSession.mustChangePassword = true;
+        }
+        return ok;
+    }
+
+    private boolean persistPasswordHash() {
+        Connection connection = DatabaseConnection.getConnection();
+        if (connection == null) return false;
+        try (PreparedStatement ps = connection.prepareStatement(
+                "UPDATE users SET password = ? WHERE user_id = ?"
+        )) {
+            ps.setString(1, this.passwordHash);
+            ps.setInt(2, this.userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeQuietly(connection);
+        }
+    }
+
+    private boolean persistPasswordAndMustChangeFlag() {
+        Connection connection = DatabaseConnection.getConnection();
+        if (connection == null) return false;
+        try (PreparedStatement ps = connection.prepareStatement(
+                "UPDATE users SET password = ?, must_change_password = ? WHERE user_id = ?"
+        )) {
+            ps.setString(1, this.passwordHash);
+            ps.setInt(2, this.mustChangePassword ? 1 : 0);
+            ps.setInt(3, this.userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeQuietly(connection);
+        }
+    }
+
+    public boolean updateAvatarPath() {
+        Connection connection = DatabaseConnection.getConnection();
+        if (connection == null) return false;
+        try (PreparedStatement ps = connection.prepareStatement(
+                "UPDATE users SET avatar_path = ?, avatar_data = ? WHERE user_id = ?"
+        )) {
+            ps.setString(1, Db.blankToNull(this.avatarPath));
+            if (this.avatarData == null || this.avatarData.length == 0) {
+                ps.setBytes(2, null);
+            } else {
+                ps.setBytes(2, this.avatarData);
+            }
+            ps.setInt(3, this.userId);
+            boolean ok = ps.executeUpdate() > 0;
+            if (ok && currentSession != null && currentSession.userId == this.userId) {
+                currentSession.avatarPath = this.avatarPath;
+                currentSession.avatarData = this.avatarData;
+            }
+            return ok;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            closeQuietly(connection);
+        }
     }
 
     public void logout() {
@@ -186,6 +355,10 @@ public class User {
     }
 
     public boolean updateProfile() {
+        if (!AccountRules.isUeEmail(this.email)) return false;
+        if (!AccountRules.isValidContactOptional(this.contactNumber)) return false;
+        this.email = AccountRules.normalizeEmail(this.email);
+
         Connection connection = DatabaseConnection.getConnection();
         if (connection == null) return false;
 
@@ -238,27 +411,21 @@ public class User {
         }
     }
 
+    /**
+     * Expects {@code passwordHash} to still hold the new plaintext; hashes before save.
+     * Clears the SAO temp-password flag so the user can enter the dashboard.
+     */
     public boolean changePassword() {
         if (this.passwordHash == null || this.passwordHash.isBlank()) return false;
-        Connection connection = DatabaseConnection.getConnection();
-        if (connection == null) return false;
-
-        try (PreparedStatement ps = connection.prepareStatement(
-                "UPDATE users SET password = ? WHERE user_id = ?"
-        )) {
-            ps.setString(1, this.passwordHash);
-            ps.setInt(2, this.userId);
-            boolean ok = ps.executeUpdate() > 0;
-            if (ok && currentSession != null && currentSession.userId == this.userId) {
-                currentSession.passwordHash = this.passwordHash;
-            }
-            return ok;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        } finally {
-            closeQuietly(connection);
+        if (!PasswordHasher.meetsPolicy(this.passwordHash)) return false;
+        this.passwordHash = PasswordHasher.hash(this.passwordHash);
+        this.mustChangePassword = false;
+        boolean ok = persistPasswordAndMustChangeFlag();
+        if (ok && currentSession != null && currentSession.userId == this.userId) {
+            currentSession.passwordHash = this.passwordHash;
+            currentSession.mustChangePassword = false;
         }
+        return ok;
     }
 
     public String getUserRole() {
@@ -268,8 +435,13 @@ public class User {
     public boolean validateAccount() {
         if (username == null || username.isBlank()) return false;
         if (passwordHash == null || passwordHash.isBlank()) return false;
+        // Before hashing: field still holds plaintext from the form.
+        if (!PasswordHasher.looksHashed(passwordHash) && !PasswordHasher.meetsPolicy(passwordHash)) {
+            return false;
+        }
         if (fullName == null || fullName.isBlank()) return false;
-        if (email == null || email.isBlank() || !email.contains("@")) return false;
+        if (!AccountRules.isUeEmail(email)) return false;
+        if (!AccountRules.isValidContactOptional(contactNumber)) return false;
         return true;
     }
 
@@ -365,6 +537,7 @@ public class User {
     private static String baseSelectSql() {
         return """
                 SELECT u.user_id, u.username, u.password, u.role, u.account_status,
+                       u.avatar_path, u.avatar_data, u.must_change_password,
                        COALESCE(s.full_name, a.full_name) AS full_name,
                        s.student_number, s.course, s.year_level,
                        COALESCE(s.contact_number, a.contact_number) AS contact_number,
@@ -400,7 +573,13 @@ public class User {
     }
 
     private static User mapUser(ResultSet rs) throws SQLException {
-        return new User(
+        String avatar = null;
+        try {
+            avatar = rs.getString("avatar_path");
+        } catch (SQLException ignored) {
+            // older schema before migration
+        }
+        User user = new User(
                 rs.getInt("user_id"),
                 rs.getString("username"),
                 rs.getString("password"),
@@ -411,8 +590,20 @@ public class User {
                 rs.getString("year_level"),
                 rs.getString("contact_number"),
                 rs.getString("email"),
-                nullSafe(rs.getString("account_status"), "Active")
+                nullSafe(rs.getString("account_status"), "Active"),
+                avatar
         );
+        try {
+            user.setAvatarData(rs.getBytes("avatar_data"));
+        } catch (SQLException ignored) {
+            // column added by migrateSchema
+        }
+        try {
+            user.setMustChangePassword(rs.getInt("must_change_password") != 0);
+        } catch (SQLException ignored) {
+            user.setMustChangePassword(false);
+        }
+        return user;
     }
 
     private void copyFrom(User other) {
@@ -427,6 +618,9 @@ public class User {
         this.contactNumber = other.contactNumber;
         this.email = other.email;
         this.accountStatus = other.accountStatus;
+        this.avatarPath = other.avatarPath;
+        this.avatarData = other.avatarData;
+        this.mustChangePassword = other.mustChangePassword;
     }
 
     private static String blankToNull(String value) {

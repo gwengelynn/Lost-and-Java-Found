@@ -1,1 +1,4 @@
 target/
+uploads/
+*.log
+# Keep db.properties in repo for local demo; override secrets via DB_PASSWORD env if needed.

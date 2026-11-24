@@ -96,6 +96,9 @@ public class Notification {
                 if (!keys.next()) return false;
                 this.notificationId = keys.getInt(1);
             }
+            EmailNotifier.notifyUser(this.userId,
+                    "Lost and Java-Found — " + (this.notificationType == null ? "Update" : this.notificationType),
+                    this.message);
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -103,6 +106,24 @@ public class Notification {
         } finally {
             Db.closeQuietly(connection);
         }
+    }
+
+    /** Notifications tied to a report for the given user (timeline). */
+    public static List<Notification> forUserReport(int userId, int reportId) {
+        return loadForUser(userId).stream()
+                .filter(n -> n.reportId != null && n.reportId == reportId)
+                .sorted(Comparator.comparing(Notification::getSentDate,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
+    }
+
+    /** Notifications tied to a claim for the given user (timeline). */
+    public static List<Notification> forUserClaim(int userId, int claimId) {
+        return loadForUser(userId).stream()
+                .filter(n -> n.claimId != null && n.claimId == claimId)
+                .sorted(Comparator.comparing(Notification::getSentDate,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
     }
 
     public void notifyReportUpdate() {

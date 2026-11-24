@@ -32,6 +32,9 @@ public class Inventory {
     private String storageBox;
     private String storageLocation;
     private String itemStatus;
+    private String photoPath;
+    /** Raw image bytes stored in MySQL (LONGBLOB photo_data). */
+    private byte[] photoData;
 
     public Inventory() {}
 
@@ -39,6 +42,14 @@ public class Inventory {
                      String category, String subCategory, String brand, String color,
                      String description, String privateDetails, LocalDate foundDate,
                      String storageBox, String storageLocation, String itemStatus) {
+        this(itemId, adminUserId, trackingNumber, itemName, category, subCategory, brand, color,
+                description, privateDetails, foundDate, storageBox, storageLocation, itemStatus, null);
+    }
+
+    public Inventory(int itemId, int adminUserId, String trackingNumber, String itemName,
+                     String category, String subCategory, String brand, String color,
+                     String description, String privateDetails, LocalDate foundDate,
+                     String storageBox, String storageLocation, String itemStatus, String photoPath) {
         this.itemId = itemId;
         this.adminUserId = adminUserId;
         this.trackingNumber = trackingNumber;
@@ -53,6 +64,7 @@ public class Inventory {
         this.storageBox = storageBox;
         this.storageLocation = storageLocation;
         this.itemStatus = itemStatus;
+        this.photoPath = photoPath;
     }
 
     public int getItemId() { return itemId; }
@@ -97,6 +109,18 @@ public class Inventory {
     public String getItemStatus() { return itemStatus; }
     public void setItemStatus(String itemStatus) { this.itemStatus = itemStatus; }
 
+    public String getPhotoPath() { return photoPath; }
+    public void setPhotoPath(String photoPath) { this.photoPath = photoPath; }
+
+    public byte[] getPhotoData() { return photoData; }
+    public void setPhotoData(byte[] photoData) { this.photoData = photoData; }
+
+    /** Sets path and loads file bytes for MySQL BLOB storage. */
+    public void setPhoto(String storedPath) {
+        this.photoPath = storedPath;
+        this.photoData = PhotoStorage.readBytes(storedPath);
+    }
+
     public boolean registerItem() {
         if (adminUserId <= 0 || itemName == null || itemName.isBlank()) return false;
         if (category == null || category.isBlank()) return false;
@@ -106,6 +130,12 @@ public class Inventory {
         }
         if (this.storageBox == null || this.storageBox.isBlank()) {
             this.storageBox = "Box A";
+        }
+        // Block spam / redundant inventory rows (same active item already logged).
+        if (findDuplicateActive(
+                this.itemName, this.category, this.color, this.brand, this.privateDetails
+        ).isPresent()) {
+            return false;
         }
 
         Connection connection = DatabaseConnection.getConnection();
@@ -121,8 +151,8 @@ public class Inventory {
                     """
                     INSERT INTO items
                     (admin_user_id, box_id, tracking_number, item_name, category, sub_category, brand,
-                     color, description, private_details, found_date, item_status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     color, description, private_details, found_date, item_status, photo_path, photo_data)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     Statement.RETURN_GENERATED_KEYS
             )) {
@@ -138,6 +168,8 @@ public class Inventory {
                 ps.setString(10, Db.blankToNull(this.privateDetails));
                 Db.setDate(ps, 11, this.foundDate);
                 ps.setString(12, this.itemStatus);
+                ps.setString(13, Db.blankToNull(this.photoPath));
+                bindPhotoData(ps, 14, this.photoData);
                 ps.executeUpdate();
                 try (ResultSet keys = ps.getGeneratedKeys()) {
                     if (!keys.next()) return false;
@@ -174,7 +206,7 @@ public class Inventory {
                     """
                     UPDATE items
                     SET box_id = ?, item_name = ?, category = ?, sub_category = ?, brand = ?, color = ?,
-                        description = ?, private_details = ?, found_date = ?
+                        description = ?, private_details = ?, found_date = ?, photo_path = ?, photo_data = ?
                     WHERE item_id = ?
                     """
             )) {
@@ -187,7 +219,9 @@ public class Inventory {
                 ps.setString(7, Db.blankToNull(this.description));
                 ps.setString(8, Db.blankToNull(this.privateDetails));
                 Db.setDate(ps, 9, this.foundDate);
-                ps.setInt(10, this.itemId);
+                ps.setString(10, Db.blankToNull(this.photoPath));
+                bindPhotoData(ps, 11, this.photoData);
+                ps.setInt(12, this.itemId);
                 return ps.executeUpdate() > 0;
             }
         } catch (SQLException e) {
@@ -319,6 +353,38 @@ public class Inventory {
         return Optional.empty();
     }
 
+    /**
+     * Finds an already-active inventory row that matches this physical item.
+     * Same name + category + color + brand (ignores unique-mark wording differences)
+     * so admins cannot re-register the same item by tweaking private details.
+     */
+    public static Optional<Inventory> findDuplicateActive(
+            String itemName, String category, String color, String brand, String privateDetails
+    ) {
+        if (itemName == null || itemName.isBlank()) return Optional.empty();
+        String nameKey = norm(itemName);
+        String catKey = norm(category);
+        String colorKey = norm(color);
+        String brandKey = norm(brand);
+
+        return loadAll().stream()
+                .filter(i -> {
+                    String status = i.itemStatus == null ? "" : i.itemStatus.toUpperCase(Locale.ENGLISH);
+                    return "AVAILABLE".equals(status)
+                            || "CLAIM_PENDING".equals(status)
+                            || "CLAIMED".equals(status);
+                })
+                .filter(i -> nameKey.equals(norm(i.itemName)))
+                .filter(i -> catKey.isEmpty() || catKey.equals(norm(i.category)))
+                .filter(i -> colorKey.equals(norm(i.color)))
+                .filter(i -> brandKey.equals(norm(i.brand)))
+                .findFirst();
+    }
+
+    private static String norm(String value) {
+        return value == null ? "" : value.trim().toLowerCase(Locale.ENGLISH);
+    }
+
     private static List<Inventory> loadAll() {
         List<Inventory> list = new ArrayList<>();
         Connection connection = DatabaseConnection.getConnection();
@@ -339,14 +405,28 @@ public class Inventory {
         return """
                 SELECT i.item_id, i.admin_user_id, i.tracking_number, i.item_name, i.category,
                        i.sub_category, i.brand, i.color, i.description, i.private_details,
-                       i.found_date, i.item_status, b.box_name, b.box_location
+                       i.found_date, i.item_status, i.photo_path, i.photo_data, b.box_name, b.box_location
                 FROM items i
                 LEFT JOIN storage_boxes b ON b.box_id = i.box_id
                 """;
     }
 
+    private static void bindPhotoData(PreparedStatement ps, int index, byte[] data) throws SQLException {
+        if (data == null || data.length == 0) {
+            ps.setBytes(index, null);
+        } else {
+            ps.setBytes(index, data);
+        }
+    }
+
     private static Inventory map(ResultSet rs) throws SQLException {
-        return new Inventory(
+        String photo = null;
+        try {
+            photo = rs.getString("photo_path");
+        } catch (SQLException ignored) {
+            // older schema
+        }
+        Inventory item = new Inventory(
                 rs.getInt("item_id"),
                 rs.getInt("admin_user_id"),
                 rs.getString("tracking_number"),
@@ -360,7 +440,14 @@ public class Inventory {
                 Db.getDate(rs, "found_date"),
                 rs.getString("box_name"),
                 rs.getString("box_location"),
-                rs.getString("item_status")
+                rs.getString("item_status"),
+                photo
         );
+        try {
+            item.setPhotoData(rs.getBytes("photo_data"));
+        } catch (SQLException ignored) {
+            // column added by migrateSchema
+        }
+        return item;
     }
 }

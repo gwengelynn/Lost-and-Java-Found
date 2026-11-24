@@ -3,12 +3,13 @@ package finalproj.mavenproject1;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -41,7 +42,8 @@ public class SignupView {
     private TextField emailField;
     private PasswordField passwordField;
     private PasswordField confirmPasswordField;
-    private TextField courseField;
+    private ComboBox<String> collegeCombo;
+    private ComboBox<String> courseCombo;
     private ComboBox<String> yearLevelCombo;
     private Label statusLabel;
 
@@ -83,7 +85,7 @@ public class SignupView {
         rootPane.getChildren().add(wash);
 
         BorderPane content = new BorderPane();
-        content.setPadding(new Insets(36, 48, 36, 48));
+        content.setPadding(new Insets(24, 40, 24, 40));
         content.setLeft(buildLeftBrandPanel());
         BorderPane.setAlignment(content.getLeft(), Pos.CENTER_LEFT);
 
@@ -106,7 +108,7 @@ public class SignupView {
         HBox ueHeader = new HBox(14);
         ueHeader.setAlignment(Pos.CENTER_LEFT);
 
-        javafx.scene.Node ueLogoNode = UeImages.ueLogo(78);
+        javafx.scene.Node ueLogoNode = UeImages.ueLogo(108);
         if (ueLogoNode != null) {
             ueHeader.getChildren().add(ueLogoNode);
         }
@@ -114,15 +116,9 @@ public class SignupView {
         VBox uniText = new VBox(2);
         uniText.setAlignment(Pos.CENTER_LEFT);
         Label uniTop = new Label("UNIVERSITY OF THE EAST");
-        uniTop.setStyle(
-                "-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;"
-                + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.85), 10, 0.4, 0, 1);"
-        );
-        Label uniBottom = new Label("PHILIPPINES");
-        uniBottom.setStyle(
-                "-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;"
-                + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.85), 10, 0.4, 0, 1);"
-        );
+        uniTop.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
+        Label uniBottom = new Label("CALOOCAN");
+        uniBottom.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
         uniText.getChildren().addAll(uniTop, uniBottom);
         ueHeader.getChildren().add(uniText);
 
@@ -134,24 +130,15 @@ public class SignupView {
 
         ImageView bagLogo = UeImages.imageView(UeImages.loadBag(), 120, 120);
         if (bagLogo != null) {
-            bagLogo.setEffect(new javafx.scene.effect.DropShadow(
-                    javafx.scene.effect.BlurType.GAUSSIAN,
-                    javafx.scene.paint.Color.rgb(255, 255, 255, 0.75),
-                    12, 0.4, 0, 0
-            ));
             titleRow.getChildren().add(bagLogo);
         }
 
         VBox titleText = new VBox(0);
         Label line1 = new Label("Lost and");
-        line1.setStyle(
-                "-fx-font-size: 38px; -fx-font-weight: bold; -fx-text-fill: white;"
-                + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.85), 12, 0.45, 0, 1);"
-        );
+        line1.setStyle("-fx-font-size: 38px; -fx-font-weight: bold; -fx-text-fill: white;");
         Label line2 = new Label("Java-Found");
         line2.setStyle(
                 "-fx-font-size: 38px; -fx-font-weight: bold; -fx-text-fill: " + UE_RED + ";"
-                + "-fx-effect: dropshadow(gaussian, rgba(255,255,255,0.95), 8, 0.55, 0, 0);"
         );
         titleText.getChildren().addAll(line1, line2);
         titleRow.getChildren().add(titleText);
@@ -160,7 +147,6 @@ public class SignupView {
         system.setWrapText(true);
         system.setStyle(
                 "-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 8 0 0 0;"
-                + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.85), 10, 0.4, 0, 1);"
         );
 
         Region rule = new Region();
@@ -171,7 +157,6 @@ public class SignupView {
         Label tagline = new Label("Reuniting what matters.");
         tagline.setStyle(
                 "-fx-font-size: 15px; -fx-font-style: italic; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 6 0 0 0;"
-                + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.85), 10, 0.4, 0, 1);"
         );
 
         brand.getChildren().addAll(ueHeader, grow, titleRow, system, rule, tagline);
@@ -179,11 +164,12 @@ public class SignupView {
     }
 
     private VBox buildSignupCard() {
-        VBox card = new VBox(9);
+        VBox card = new VBox(14);
         card.setAlignment(Pos.TOP_CENTER);
-        card.setPadding(new Insets(22, 26, 18, 26));
-        card.setMaxWidth(420);
-        card.setPrefWidth(420);
+        card.setPadding(new Insets(22, 24, 18, 24));
+        card.setMaxWidth(440);
+        card.setPrefWidth(440);
+        card.setMaxHeight(640);
         card.setStyle(
                 "-fx-background-color: " + CARD_BG + ";"
                 + "-fx-background-radius: 16;"
@@ -198,46 +184,54 @@ public class SignupView {
                 "-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: " + TEXT_DARK + ";"
         );
 
-        Label hint = new Label("Sign up creates a STUDENT account. Admins are seeded only.");
+        Label hint = new Label("Sign up creates a STUDENT account. Admin accounts are staff-only.");
         hint.setWrapText(true);
         hint.setStyle("-fx-font-size: 12px; -fx-text-fill: " + TEXT_MUTED + ";");
 
         fullNameField = input("Full name");
         usernameField = input("Username");
-        studentNumberField = input("Student number (e.g. 2025-12345)");
-        emailField = input("Email");
-        passwordField = password("Password");
+        studentNumberField = input("2024*******");
+        emailField = input("UE email (…@ue.edu.ph)");
+        passwordField = password("Password (8+ chars, letter + number)");
         confirmPasswordField = password("Confirm password");
-        courseField = input("Course (e.g. BSCPE)");
 
-        yearLevelCombo = new ComboBox<>();
-        yearLevelCombo.getItems().setAll("1", "2", "3", "4");
+        collegeCombo = styledCombo(UePrograms.COLLEGES);
+        courseCombo = styledCombo();
+        syncCoursesForCollege(collegeCombo.getValue());
+        collegeCombo.valueProperty().addListener((obs, oldVal, newVal) -> syncCoursesForCollege(newVal));
+
+        yearLevelCombo = styledCombo(UePrograms.YEAR_LEVELS);
         yearLevelCombo.getSelectionModel().selectFirst();
-        yearLevelCombo.setMaxWidth(Double.MAX_VALUE);
-        yearLevelCombo.setPrefHeight(40);
-        yearLevelCombo.setStyle(
-                "-fx-background-color: " + FIELD_BG + ";"
-                + "-fx-border-color: " + BORDER + ";"
-                + "-fx-border-radius: 10;"
-                + "-fx-background-radius: 10;"
+
+        VBox formFields = new VBox(12);
+        formFields.setFillWidth(true);
+        formFields.getChildren().addAll(
+                fieldGroup("Full name", fullNameField),
+                fieldGroup("Username", usernameField),
+                fieldGroup("Student number", studentNumberField),
+                fieldGroup("Email", emailField),
+                fieldGroup("Password", passwordField),
+                fieldGroup("Confirm password", confirmPasswordField),
+                fieldGroup("College", collegeCombo),
+                fieldGroup("Course", courseCombo),
+                fieldGroup("Year level", yearLevelCombo)
         );
 
+        ScrollPane formScroll = new ScrollPane(formFields);
+        formScroll.setFitToWidth(true);
+        formScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        formScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        formScroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        formScroll.setPadding(new Insets(2, 2, 2, 0));
+        VBox.setVgrow(formScroll, Priority.ALWAYS);
+
+        // Errors / success use Toast — no inline status banner.
         statusLabel = new Label("");
-        statusLabel.setWrapText(true);
-        statusLabel.setStyle("-fx-text-fill: " + UE_RED + "; -fx-font-size: 12px;");
+        statusLabel.setManaged(false);
+        statusLabel.setVisible(false);
 
-        Button signupButton = new Button("Create account");
+        Button signupButton = UiButtons.primary("Create account", this::handleSignup);
         signupButton.setMaxWidth(Double.MAX_VALUE);
-        signupButton.setStyle(
-                "-fx-background-color: " + UE_RED + ";"
-                + "-fx-text-fill: white;"
-                + "-fx-font-size: 14px;"
-                + "-fx-font-weight: bold;"
-                + "-fx-background-radius: 10;"
-                + "-fx-padding: 11 16 11 16;"
-                + "-fx-cursor: hand;"
-        );
-        signupButton.setOnAction(e -> handleSignup());
         signupButton.setDefaultButton(true);
 
         Label haveAccount = new Label("Already have an account?");
@@ -251,50 +245,61 @@ public class SignupView {
 
         HBox backRow = new HBox(6, haveAccount, backLink);
         backRow.setAlignment(Pos.CENTER);
+        backRow.setPadding(new Insets(4, 0, 0, 0));
 
-        card.getChildren().addAll(
-                heading,
-                hint,
-                fieldLabel("Full name"),
-                fullNameField,
-                fieldLabel("Username"),
-                usernameField,
-                fieldLabel("Student number"),
-                studentNumberField,
-                fieldLabel("Email"),
-                emailField,
-                fieldLabel("Password"),
-                passwordField,
-                fieldLabel("Confirm password"),
-                confirmPasswordField,
-                fieldLabel("Course"),
-                courseField,
-                fieldLabel("Year level"),
-                yearLevelCombo,
-                statusLabel,
-                signupButton,
-                backRow
-        );
+        VBox footer = new VBox(12, signupButton, backRow);
+        footer.setFillWidth(true);
+
+        card.getChildren().addAll(heading, hint, formScroll, footer);
         return card;
     }
 
+    private static VBox fieldGroup(String label, Node control) {
+        VBox group = new VBox(5);
+        group.setFillWidth(true);
+        group.getChildren().addAll(fieldLabel(label), control);
+        return group;
+    }
+
+    private void syncCoursesForCollege(String college) {
+        String[] courses = UePrograms.coursesForCollege(college);
+        courseCombo.getItems().setAll(courses);
+        if (courses.length > 0) {
+            courseCombo.getSelectionModel().selectFirst();
+        } else {
+            courseCombo.getSelectionModel().clearSelection();
+        }
+    }
+
     private void handleSignup() {
+        clearStatus();
         String fullName = text(fullNameField);
         String username = text(usernameField);
         String studentNumber = text(studentNumberField);
         String email = text(emailField);
         String password = passwordField.getText() == null ? "" : passwordField.getText();
         String confirm = confirmPasswordField.getText() == null ? "" : confirmPasswordField.getText();
-        String course = text(courseField);
+        String college = collegeCombo.getValue() == null ? "" : collegeCombo.getValue();
+        String course = courseCombo.getValue() == null ? "" : courseCombo.getValue();
         String yearLevel = yearLevelCombo.getValue() == null ? "" : yearLevelCombo.getValue();
 
         if (fullName.isEmpty() || username.isEmpty() || studentNumber.isEmpty() || email.isEmpty()
-                || password.isEmpty() || confirm.isEmpty() || course.isEmpty() || yearLevel.isEmpty()) {
+                || password.isEmpty() || confirm.isEmpty() || college.isEmpty()
+                || course.isEmpty() || yearLevel.isEmpty()) {
             showError("Please fill in all fields.");
             return;
         }
-        if (!password.equals(confirm)) {
-            showError("Passwords do not match.");
+        if (!studentNumber.matches("\\d{11}")) {
+            showError("Student number must be exactly 11 digits (e.g. 20242314567).");
+            return;
+        }
+        String pairError = PasswordHasher.validateNewPasswordPair(password, confirm);
+        if (pairError != null) {
+            showError(pairError);
+            return;
+        }
+        if (!AccountRules.isUeEmail(email)) {
+            showError(AccountRules.ueEmailMessage());
             return;
         }
         if (User.usernameExists(username)) {
@@ -305,7 +310,7 @@ public class SignupView {
         User account = new User();
         account.setFullName(fullName);
         account.setUsername(username);
-        account.setEmail(email);
+        account.setEmail(AccountRules.normalizeEmail(email));
         account.setPasswordHash(password);
         account.setRole("STUDENT");
         account.setCourse(course);
@@ -320,22 +325,16 @@ public class SignupView {
             return;
         }
 
-        Alert success = new Alert(Alert.AlertType.INFORMATION);
-        success.setTitle("Account created");
-        success.setHeaderText("Welcome, " + fullName + "!");
-        success.setContentText(
-                "Your STUDENT account \"" + username + "\" is ready.\n"
-                + "Click OK to return to Login, then sign in.\n"
-                + "Select the Student role toggle on the Login screen."
-        );
-        success.showAndWait();
+        Toast.success(stage,
+                "Welcome, " + fullName + "! Account \"" + username
+                + "\" is ready — sign in with the Student role.");
         goToLogin();
     }
 
     private void goToLogin() {
         LoginView loginView = new LoginView(stage);
         stage.setTitle("Lost and Java-Found — Login");
-        stage.setScene(new javafx.scene.Scene(loginView.getRoot(), 1100, 680));
+        stage.setScene(UeChrome.scene(loginView.getRoot(), 1100, 680));
     }
 
     private static String text(TextField field) {
@@ -343,12 +342,11 @@ public class SignupView {
     }
 
     private void showError(String message) {
-        statusLabel.setText(message);
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Sign up failed");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+        Toast.error(stage, message == null ? "Sign up failed." : message);
+    }
+
+    private void clearStatus() {
+        // kept for handleSignup entry; feedback is toast-only
     }
 
     private static Label fieldLabel(String text) {
@@ -357,6 +355,35 @@ public class SignupView {
                 "-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: " + TEXT_MUTED + ";"
         );
         return label;
+    }
+
+    private static ComboBox<String> styledCombo(String... items) {
+        ComboBox<String> combo = new ComboBox<>();
+        if (items.length > 0) {
+            combo.getItems().setAll(items);
+            combo.getSelectionModel().selectFirst();
+        }
+        combo.setMaxWidth(Double.MAX_VALUE);
+        combo.setPrefHeight(42);
+        combo.setVisibleRowCount(8);
+        combo.getStyleClass().add("ue-combo");
+        combo.setStyle(
+                "-fx-background-color: " + FIELD_BG + ";"
+                + "-fx-border-color: " + BORDER + ";"
+                + "-fx-border-radius: 10;"
+                + "-fx-background-radius: 10;"
+                + "-fx-font-size: 13px;"
+        );
+        combo.focusedProperty().addListener((o, was, focused) -> combo.setStyle(
+                "-fx-background-color: " + FIELD_BG + ";"
+                + "-fx-border-color: " + (focused ? UE_RED : BORDER) + ";"
+                + "-fx-border-width: " + (focused ? "1.6" : "1") + ";"
+                + "-fx-border-radius: 10;"
+                + "-fx-background-radius: 10;"
+                + "-fx-font-size: 13px;"
+                + (focused ? "-fx-effect: dropshadow(gaussian, rgba(228,17,53,0.22), 10, 0, 0, 2);" : "")
+        ));
+        return combo;
     }
 
     private static TextField input(String prompt) {

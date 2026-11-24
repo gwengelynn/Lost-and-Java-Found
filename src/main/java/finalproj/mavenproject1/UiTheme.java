@@ -58,6 +58,28 @@ public final class UiTheme {
                 + "-fx-font-weight: bold;"
                 + "-fx-background-radius: 10;"
                 + "-fx-padding: 10 18 10 18;"
+                + "-fx-cursor: hand;"
+                + "-fx-effect: dropshadow(gaussian, rgba(228,17,53,0.28), 8, 0, 0, 2);";
+    }
+
+    public static String primaryButtonHover() {
+        return "-fx-background-color: " + UE_RED_HOVER + ";"
+                + "-fx-text-fill: white;"
+                + "-fx-font-size: 13px;"
+                + "-fx-font-weight: bold;"
+                + "-fx-background-radius: 10;"
+                + "-fx-padding: 10 18 10 18;"
+                + "-fx-cursor: hand;"
+                + "-fx-effect: dropshadow(gaussian, rgba(228,17,53,0.40), 10, 0, 0, 3);";
+    }
+
+    public static String primaryButtonPressed() {
+        return "-fx-background-color: #A50C26;"
+                + "-fx-text-fill: white;"
+                + "-fx-font-size: 13px;"
+                + "-fx-font-weight: bold;"
+                + "-fx-background-radius: 10;"
+                + "-fx-padding: 10 18 10 18;"
                 + "-fx-cursor: hand;";
     }
 
@@ -73,12 +95,61 @@ public final class UiTheme {
                 + "-fx-cursor: hand;";
     }
 
+    public static String ghostButtonHover() {
+        return "-fx-background-color: " + UE_RED_SOFT + ";"
+                + "-fx-text-fill: " + TEXT + ";"
+                + "-fx-font-size: 12px;"
+                + "-fx-font-weight: bold;"
+                + "-fx-background-radius: 8;"
+                + "-fx-border-color: " + BORDER_STRONG + ";"
+                + "-fx-border-radius: 8;"
+                + "-fx-padding: 6 12 6 12;"
+                + "-fx-cursor: hand;";
+    }
+
+    public static String ghostButtonPressed() {
+        return "-fx-background-color: rgba(228, 17, 53, 0.18);"
+                + "-fx-text-fill: " + TEXT + ";"
+                + "-fx-font-size: 12px;"
+                + "-fx-font-weight: bold;"
+                + "-fx-background-radius: 8;"
+                + "-fx-border-color: " + BORDER_STRONG + ";"
+                + "-fx-border-radius: 8;"
+                + "-fx-padding: 6 12 6 12;"
+                + "-fx-cursor: hand;";
+    }
+
     public static String linkButton() {
         return "-fx-background-color: transparent;"
                 + "-fx-text-fill: " + UE_RED + ";"
                 + "-fx-font-size: 12px;"
                 + "-fx-font-weight: bold;"
                 + "-fx-padding: 4 8 4 8;"
-                + "-fx-cursor: hand;";
+                + "-fx-cursor: hand;"
+                + "-fx-underline: false;";
+    }
+
+    public static String linkButtonHover() {
+        return "-fx-background-color: " + ROW_HOVER + ";"
+                + "-fx-text-fill: " + UE_RED_HOVER + ";"
+                + "-fx-font-size: 12px;"
+                + "-fx-font-weight: bold;"
+                + "-fx-background-radius: 6;"
+                + "-fx-padding: 4 8 4 8;"
+                + "-fx-cursor: hand;"
+                + "-fx-underline: true;";
+    }
+
+    public static String disabledButton() {
+        return "-fx-background-color: rgba(120,120,128,0.18);"
+                + "-fx-text-fill: #8B8B93;"
+                + "-fx-font-size: 12px;"
+                + "-fx-font-weight: bold;"
+                + "-fx-background-radius: 8;"
+                + "-fx-border-color: rgba(120,120,128,0.25);"
+                + "-fx-border-radius: 8;"
+                + "-fx-padding: 6 12 6 12;"
+                + "-fx-opacity: 0.85;"
+                + "-fx-cursor: default;";
     }
 }

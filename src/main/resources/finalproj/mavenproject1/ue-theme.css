@@ -1,0 +1,219 @@
+/* University of the East — shared ComboBox / DatePicker / list styling */
+
+.combo-box,
+.combo-box-base {
+    -fx-background-color: rgba(255, 255, 255, 0.98);
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(228, 17, 53, 0.30);
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 2 6 2 6;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+}
+
+.combo-box:focused,
+.combo-box-base:focused {
+    -fx-border-color: #E41135;
+    -fx-border-width: 1.6;
+    -fx-effect: dropshadow(gaussian, rgba(228, 17, 53, 0.22), 10, 0, 0, 2);
+}
+
+.combo-box .list-cell {
+    -fx-text-fill: #141416;
+    -fx-background-color: transparent;
+    -fx-padding: 8 12 8 12;
+}
+
+.combo-box .arrow-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0 10 10 0;
+    -fx-padding: 0 8 0 6;
+}
+
+.combo-box .arrow {
+    -fx-background-color: #E41135;
+    -fx-shape: "M 0 0 L 8 0 L 4 5 Z";
+    -fx-padding: 3 4 3 4;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: #FFFCFC;
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(228, 17, 53, 0.45);
+    -fx-border-radius: 12;
+    -fx-border-width: 1.2;
+    -fx-effect: dropshadow(gaussian, rgba(165, 12, 38, 0.22), 16, 0.12, 0, 6);
+    -fx-padding: 4;
+}
+
+.combo-box-popup .list-view .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #141416;
+    -fx-padding: 10 14 10 14;
+    -fx-background-radius: 8;
+    -fx-font-size: 13px;
+}
+
+.combo-box-popup .list-view .list-cell:filled:hover {
+    -fx-background-color: rgba(228, 17, 53, 0.12);
+    -fx-text-fill: #141416;
+}
+
+.combo-box-popup .list-view .list-cell:filled:selected,
+.combo-box-popup .list-view .list-cell:filled:selected:hover {
+    -fx-background-color: #E41135;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.date-picker {
+    -fx-background-color: rgba(255, 255, 255, 0.98);
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(228, 17, 53, 0.30);
+    -fx-border-radius: 10;
+}
+
+.date-picker:focused {
+    -fx-border-color: #E41135;
+}
+
+.date-picker .arrow-button {
+    -fx-background-color: rgba(228, 17, 53, 0.12);
+    -fx-background-radius: 0 10 10 0;
+}
+
+.date-picker .arrow-button:hover {
+    -fx-background-color: #E41135;
+}
+
+.date-picker .arrow-button .arrow {
+    -fx-background-color: #E41135;
+}
+
+.date-picker .arrow-button:hover .arrow {
+    -fx-background-color: white;
+}
+
+.date-picker-popup .month-year-pane {
+    -fx-background-color: #E41135;
+}
+
+.date-picker-popup .month-year-pane .label {
+    -fx-text-fill: white;
+}
+
+.date-picker-popup .spinner .button .left-arrow,
+.date-picker-popup .spinner .button .right-arrow {
+    -fx-background-color: white;
+}
+
+.date-picker-popup .day-cell:hover {
+    -fx-background-color: rgba(228, 17, 53, 0.15);
+}
+
+.date-picker-popup .selected {
+    -fx-background-color: #E41135;
+    -fx-text-fill: white;
+}
+
+.scroll-bar:vertical .thumb,
+.scroll-bar:horizontal .thumb {
+    -fx-background-color: rgba(228, 17, 53, 0.45);
+    -fx-background-radius: 8;
+}
+
+.scroll-bar:vertical .thumb:hover,
+.scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: #E41135;
+}
+
+/* Filter chips + sidebar nav — kill Modena white focus/press flash.
+   Active = solid UE red; idle = soft red box (never plain white). */
+
+.button.ue-chip,
+.button.ue-nav {
+    -fx-background-insets: 0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-effect: null;
+}
+
+.button.ue-chip-idle,
+.button.ue-chip-idle:hover,
+.button.ue-chip-idle:focused,
+.button.ue-chip-idle:armed {
+    -fx-background-color: rgba(252, 232, 236, 0.92);
+    -fx-text-fill: #141416;
+    -fx-font-weight: bold;
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(228, 17, 53, 0.40);
+    -fx-border-radius: 16;
+    -fx-border-width: 1.2;
+    -fx-padding: 8 14 8 14;
+    -fx-cursor: hand;
+    -fx-background-insets: 0;
+}
+
+.button.ue-chip-idle:hover {
+    -fx-background-color: rgba(228, 17, 53, 0.16);
+    -fx-border-color: #E41135;
+}
+
+.button.ue-chip-idle:armed {
+    -fx-background-color: rgba(228, 17, 53, 0.28);
+    -fx-border-color: #C70E2E;
+}
+
+.button.ue-chip-active,
+.button.ue-chip-active:hover,
+.button.ue-chip-active:focused,
+.button.ue-chip-active:armed {
+    -fx-background-color: linear-gradient(to bottom, #E41135, #C70E2E);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 16;
+    -fx-border-color: #A50C26;
+    -fx-border-radius: 16;
+    -fx-border-width: 1;
+    -fx-padding: 8 14 8 14;
+    -fx-cursor: hand;
+    -fx-background-insets: 0;
+}
+
+.button.ue-nav-idle,
+.button.ue-nav-idle:hover,
+.button.ue-nav-idle:focused,
+.button.ue-nav-idle:armed {
+    -fx-background-color: rgba(252, 232, 236, 0.88);
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(228, 17, 53, 0.35);
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 10 12 10 12;
+    -fx-cursor: hand;
+    -fx-background-insets: 0;
+}
+
+.button.ue-nav-idle:hover {
+    -fx-background-color: rgba(228, 17, 53, 0.16);
+    -fx-border-color: #E41135;
+}
+
+.button.ue-nav-idle:armed {
+    -fx-background-color: rgba(228, 17, 53, 0.28);
+    -fx-border-color: #C70E2E;
+}
+
+.button.ue-nav-active,
+.button.ue-nav-active:hover,
+.button.ue-nav-active:focused,
+.button.ue-nav-active:armed {
+    -fx-background-color: linear-gradient(to right, #E41135, #C70E2E);
+    -fx-background-radius: 10;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 10 12 10 12;
+    -fx-cursor: hand;
+    -fx-background-insets: 0;
+}
